@@ -87,6 +87,31 @@ The parameters of the feature layer in the network are frozen. We are updating t
 \subsection{Nearest Neighbour}
 Our nearest neighbor implementation is straight forward. We extract features from image in our over 13,000+ images dataset using the VGG16 network.
 We then extract the feature from the input image as well. A cosine similarity is calculated on the input image and each image in the dataset. The images with the top five similarities are taken and the recipes are output.
+
+\subsection{Data Augmentation}
+ Data augmentation was initially performed on the data set to ensure that accuracy scores and generalization were optimal. Images were processed through a pipeline that included a range of perturbations. Ten augmentations were made for each image in the initial set, bringing the image data set up to roughly 130,000. The modifications included horizontal flipping, random cropping, Gaussian blurs, strengthening or weakening the image contrast, altering each image channel's brightness, and providing affine transformations. Each of these alterations happened within a range of parameters listed in  Table \ref{tab:augParams}
+ \begin{table}
+\begin{center}
+\begin{tabular}{|l|c|}
+\hline
+Augmentation & Parameters \\
+\hline\hline
+Flip & 0.5 \\
+Crop &  0 - 0.1 \\
+Contrast &  0.75 -1.5 \\
+Gaussian Noise &  0 - 12.75 \\
+Noise per channel &  0.5 \\
+Brightness &  0.8 - 1.2 \\
+Affine Scale &  0.8 - 1.2 \\
+Affine Translation &  -0.2 - 0.2 \\
+Affine Rotation &  -25 - 25 \\
+Affine Shear &  -8 - 8 \\
+\hline
+\end{tabular}
+\end{center}
+\caption{Augmentation Parameters}
+\label{tab:augParams}
+\end{table}
 \subsection{Food Technique}
 The original dataset does not come label the images with the techniques. In order to gather this information, 8600 images with technique labels was scraped from the same website, Epicurious. The effort generated 20 total unbalanced techniques. A few steps were taken to mitigate this problem. First a consolidation of techniques was done. For example, techniques such as “fry”, “pan-fry”, “stir-fry”, and “deep-fry” were all consolidated in "fry". This effort was able to cut down the number of techniques from 20 to 10, giving the minority classes much more representation than before. However, the majority classes also gained the same benefit and had about five times the representation as the minority class. Two different methods were used to correct this issue. 
 
