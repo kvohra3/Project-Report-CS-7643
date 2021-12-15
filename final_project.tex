@@ -115,10 +115,6 @@ With SMOTE & 0.9663 & 0.8066 & 0.8492 & 0.8544 & 0.9145 & 0.8034 & 0.9721 & 0.77
 \caption{Technique Accuracy Comparison.}
 \label{tab:accuracy}
 \end{table*}
-
-
-
-
 Our application is solving the problem of returning a possible recipe given an input image of a food dish. The original dataset contains all the food images and associated recipes needed to train our model. In order to solve this problem, our application takes a query approach. Given an input image, we find the top five similar images and then return the recipes of these top five images. As work on this project progressed, our definition of 'similar' evolved. It started with us querying images that looked similar. While this initial - and trivial - approach worked great for some foods, it would often run into the issue of associating two dishes that looked similar but in reality were complete different. In order to combat this and improve our query results, we looked to upgrade our network. Instead of utilizing just a basic nearest neighbour model to find similar looking images we also built two additional models - one to predict food categories and one to predict the cooking technique.
 \subsection{Image Feature Extraction}
 The base model we use to extract image features is VGG16 \cite{Authors01}. It has a feature layer composed by a set of convolution layers and max pooling layers, an average pooling layers and a classification layer which is composed by three fully connected layers, ReLU activation layers and drop out layers. 
@@ -178,7 +174,7 @@ Focal Loss (30 categories) & 0.8225 & 0.9972 & 0.2671 & 0.3017 \\
 \end{tabular}
 \end{center}
 \caption{Category Accuracy Comparison}
-\label{tab:accuracy}
+\label{tab:category_accuracy}
 \end{table*}
 
 \begin{table}
@@ -221,13 +217,15 @@ Class 29 & 0.3324 & 0.48093 \\
 \end{tabular}
 \end{center}
 \caption{Per Category Accuracy Comparison}
-\label{tab:accuracy}
+\label{tab:per_category_accuracy}
 \end{table}
 
 
 \subsection{Food Technique Classification}
-We measure the performance of the technique classification model using top-3 accuracy and also the per class accuracy because our data is imbalanced. The initial number of images per class can be found in Table \ref{tab:techniques_count}. As we can see from the per class accuracy results shown in Table \ref{tab:accuracy}, the model tends to perform well with major class like bake, but poorly with minor classes like braise/stew or marinate. The most intuitive explanation here is that we don’t have enough images for the model to learn those techniques. This is proven to be true because most of the minor classes start with accuracy 0, after we iterating through more training epochs, the model is able to see more images with the minor class label, and we can see some improvement over the minor classes. Also, after we augmented the minor classes’ images so that it has similar amount of images as for the major class, we got further improvement on the per class accuracy. \\
+Due to the fact that the data set is imbalanced, we are using the per class accuracy in conjunction with the top-3 accuracy in order to measure the performance in the technique classification model. The number of images in the data set found in each class bucket can be found in Table \ref{tab:techniques_count}. As the seen in Table \ref{tab:accuracy}, the model is able to perform well on majority classes (i.e 'bake'), but is not able to translate that to he minority classes (i.e. 'braise/stew' or 'marinate'). Intuitively, this is most likely because the model does not have enough images in the minority classes for it to draw meaningful connections. We can prove this further when looking at the accuracy history while the model trains. The minority classes all start with an accuracy of 0,but gradually increase as the number of epochs increase and the model sees more images with the minoirty class labels. Furthermore, when image augmentation was applied to equalize the distribuiton across class labels, the model was able to improve its per class accuracy. 
+
 However, as you can see from the loss curves in Figure  \ref{fig:loss_curve}, training with both raw images and augmented images tend to have overfitting issues. We are using cross-entropy loss function and Adam as the optimizer. We did try using a smaller learning rate, a larger regularization term or even switch the optimizer to SGD, but as it turned out, it would just slow down the process to reach the elbow point of the validation loss curve instead of making any progress minimizing the loss. \\
+
 What we thought the bottleneck at this point is that the the performance on the minor classes are still not good and not able to improve further. Though augmentation helped a bit, it is still not able to solve the issue. We think this is probably related to the fact that technique is not a physical object. So, the image augmentation method that does the rotation, random crop, flip or blurring doesn’t actually add that much new information needed for technique classification. \\
 Then, we tried SMOTE, which we use to oversample the data through images’ feature space extracted from the VGG16 network. This turned out to be able to add in much more useful new information for the model to learn about the minor technique classes. We achieved a 93.47\% top-3 accuracy and the per class accuracy improves a lot as well. Meanwhile, we don’t have the elbow point in the validation loss curve anymore. Both training and validation loss curves are able to converge within 100 epochs.
 
@@ -255,10 +253,12 @@ We randomly selected 2000 images and making query using nearest neighbour and co
     \end{right}
 \end{subfigure}%
   \caption{Category Loss Curves.}
-\label{fig:loss_curve}
+\label{fig:category_loss_curve}
 \end{figure}
 \subsection{Food Category Classification}
-TODO: Add Food Category related result.
+The performance of the food category model follows the same precedence as the food technique model. For all experiments the model used a learning rate of $1e-05$ and Adam a the optimizing function. As stated above, the dataset being unbalanced requires us to utilize both the top-5 predicted categories and the per class accuracy. As stated above, the first iteration of the topic modeling used to generate categories output 200 unique categories. As shown in Table \ref{tab:category_accuracy}, filtering down the categories from 200 to 30 provided an improvement towards the model performance, but was still not able to solve the overfitting problem being seen. We than incorporated SMOTE in order to balance out the amount of images in each category. Once again, however, this did not solve the over fitting issue. 
+
+The next experiment that was run was to compare the results between cross entropy loss and focal loss. Table \ref{tab:per_category_accuracy} shows the per category accuracy comparing both loss functions. While cross-entropy loss had a higher mean as seen in Table \ref{tab:category_accuracy}, it did not perform as well as focal-loss. Figure \ref{fig:category_loss_curve} further showcases this point. Both models experienced massive over fitting of the data, but the focal-loss function provided a lower overall loss through each epoch. In addition to that, Figure \ref{fig:category_accuracy_curve} shows the accuracy through each epoch using both loss functions. While though 50 epochs, the focal-loss modal performed roughly the same as the cross-entropy modal, it is clear that the former has an upward trend while the latter is starting to have a downward trend. This would mean with possibly better data representation, or more epochs the food category modal could show more improvement while utilizing focal-loss as the loss function. However, due to the massive over fitting being seen at training time, and the performance already achieved via the technique modal, we decided to not include the category modal into the overall nearest neighbor network. 
 
 \begin{figure}
 \begin{subfigure}
@@ -272,7 +272,7 @@ TODO: Add Food Category related result.
     \end{right}
 \end{subfigure}%
   \caption{Category Accuracy Curves.}
-\label{fig:loss_curve}
+\label{fig:category_accuracy_curve}
 \end{figure}
 
 %-------------------------------------------------------------------------
